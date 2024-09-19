@@ -30,7 +30,13 @@ class ValueLayer(nn.Module):
 
 class ScaledDotProductAttention(nn.Module):
     def forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
-        #TODO
+        d_k = q.size(-1)
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)
+        if mask is not None:
+            scores = scores.masked_fill(mask == 0, -1e9)
+        attention = F.softmax(scores, dim=-1)
+        context = torch.matmul(attention, v)
+        return context, attention
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model: int, n_heads: int) -> None:
@@ -45,4 +51,12 @@ class MultiHeadAttention(nn.Module):
         self.fc = nn.Linear(n_heads * d_model, d_model)
     
     def forward(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        #TODO
+        n_batches = Q.size(0)
+        
+        q = self.query_layers(Q).view(n_batches, -1, self.n_heads, self.d_model).transpose(1, 2)
+        k = self.key_layers(K).view(n_batches, -1, self.n_heads, self.d_model).transpose(1, 2)
+        v = self.value_layers(V).view(n_batches, -1, self.n_heads, self.d_model).transpose(1, 2)
+        
+        context, attention = self.attention(q, k, v, mask)
+        context = context.transpose(1, 2).contiguous().view(n_batches, -1, self.n_heads * self.d_model)
+        return self.fc(context)

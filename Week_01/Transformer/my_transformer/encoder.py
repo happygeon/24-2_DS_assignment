@@ -20,4 +20,14 @@ class TransformerEncoderLayer(nn.Module):
     
     def forward(self, x: Tensor) -> Tensor:
         mask = None
-        #TODO
+        x = self.residual1(x, lambda x: self.self_attn(x, x, x)) 
+        x = self.norm1(x)
+        
+        x = self.dropout1(x)
+        
+        x = self.residual2(x, lambda x: self.ff(x))
+        x = self.norm2(x)
+        
+        x = self.dropout2(x)
+        
+        return x
