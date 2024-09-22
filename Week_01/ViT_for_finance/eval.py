@@ -106,12 +106,12 @@ x_test, y_test = load_dataset()
 datasets = make_dataset(x_test, y_test)
 
 
-models = ['/Users/daniel/Downloads/ViT_for_finance/torchDPPP/model_save/model_40.pt']
+models = ['./model_save/ViT.pt']
 
 profit_ranking = []
 
 for item in models:
-    model = CNN()
+    model = VisionTransformer()
     model.load_state_dict(torch.load(item))
     model.eval()
     list_of_signals = []
@@ -158,7 +158,7 @@ print(f"Sharpe ratio: {sharpe}")
 
 x = pd.date_range(start="2017-09-25", end="2024-08-29")
 x = x[-len(daily_money):]
-df = pd.read_csv('KRW-BTC.csv')
+df = pd.read_csv('./utils/KRW-BTC.csv')
 close_prices = df['Close'].iloc[-len(daily_money):]
 close_prices = close_prices/close_prices.iloc[0]
 
